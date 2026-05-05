@@ -1,42 +1,38 @@
-import { StyleSheet, Text, View, Image, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, Image, ImageBackground, SectionList } from 'react-native';
 import GameCard from './componentes/GameCard';
-import dados from './assets/dados.json'
-import { SectionList } from 'react-native-web';
+import dados from './assets/dados.json';
 
 export default function App() {
-
   const jogos = dados.jogos;
 
   const agruparPorData = (jogos) => {
     return jogos.reduce((acc, jogo) => {
+      const data = jogo.data_brasilia;
 
-      const data = jogo.data_brasilia
-
-      if (!acc[data]){
+      if (!acc[data]) {
         acc[data] = [];
       }
 
       acc[data].push(jogo);
 
       return acc;
+    }, {});
+  };
 
-    }, {})
-  }
-    const jogosAgrupados = agruparPorData(jogos);
-    
-    const jogosTratados = Object.keys(jogosAgrupados).map(data =>{
-      return {
-        title: data,
-        data: jogosAgrupados[data]
-      }
-    });
+  const jogosAgrupados = agruparPorData(jogos);
 
-    
+  const jogosTratados = Object.keys(jogosAgrupados).map(data => ({
+    title: data,
+    data: jogosAgrupados[data]
+  }));
 
   return (
-    <ImageBackground style={styles.container}
-      source={require('./assets/bg-overlay.png')}>
-      <Image style={styles.logo}
+    <ImageBackground
+      style={styles.container}
+      source={require('./assets/bg-overlay.png')}
+    >
+      <Image
+        style={styles.logo}
         source={require('./assets/unicopa.png')}
       />
 
@@ -44,24 +40,18 @@ export default function App() {
 
       <SectionList
         sections={jogosTratados}
-        keyExtractor={(item, index) => item + index}
+        keyExtractor={(item, index) => index.toString()}
         renderItem={() => null}
-        renderSectionHeader={ ({section}) => (
+        renderSectionHeader={({ section }) => (
           <View style={styles.card}>
-
             <Text style={styles.data}>{section.title}</Text>
-            {
-              section.data.map(jogo => (
-                <GameCard key={jogo.id} game={jogo}/>
-              ))
-            }
-        
-            
-          </View>
-        )
-        }
-      />
 
+            {section.data.map(jogo => (
+              <GameCard key={jogo.id} game={jogo} />
+            ))}
+          </View>
+        )}
+      />
     </ImageBackground>
   );
 }
