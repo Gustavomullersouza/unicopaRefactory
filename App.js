@@ -1,5 +1,16 @@
-import { StyleSheet, Text, View, Image, ImageBackground, SectionList } from 'react-native';
-import dados from './assets/dados.json'
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  ImageBackground,
+  SectionList,
+  TouchableOpacity
+} from 'react-native';
+
+import { useState } from 'react';
+
+import dados from './assets/dados.json';
 import { formatarData } from './utils/DateFormat';
 import DiaCard from './componentes/DiaCard';
 
@@ -7,84 +18,179 @@ export default function App() {
 
   const jogos = dados.jogos;
 
+  const [favoritos, setFavoritos] = useState([]);
+  const [grupoSelecionado, setGrupoSelecionado] = useState('TODOS');
+
+  const grupos = [
+    'TODOS',
+    ...new Set(jogos.map(jogo => jogo.grupo))
+  ];
+
+  const toggleFavorito = (id) => {
+    if (favoritos.includes(id)) {
+      setFavoritos(favoritos.filter(item => item !== id));
+    } else {
+      setFavoritos([...favoritos, id]);
+    }
+  };
+
+  const jogosFiltrados =
+    grupoSelecionado === 'TODOS'
+      ? jogos
+      : jogos.filter(jogo => jogo.grupo === grupoSelecionado);
+
   const agruparPorData = (jogos) => {
     return jogos.reduce((acc, jogo) => {
 
       const data = formatarData(jogo.data_brasilia);
 
-      if (!acc[data]) {
-        acc[data] = [];
-      }
+      if (!acc[data]) acc[data] = [];
 
       acc[data].push(jogo);
 
+      acc[data].sort((a, b) =>
+        a.hora_brasilia.localeCompare(b.hora_brasilia)
+      );
+
       return acc;
-
     }, {});
-  }
+  };
 
-  const jogosAgrupados = agruparPorData(jogos);
+  const jogosAgrupados = agruparPorData(jogosFiltrados);
 
-  const jogosTratados = Object.keys(jogosAgrupados).map(data => {
-    return {
-      title: data,
-      data: jogosAgrupados[data]
-    }
-  });
+  const jogosTratados = Object.keys(jogosAgrupados).map(data => ({
+    title: data,
+    data: jogosAgrupados[data]
+  }));
 
-return (
-    <ImageBackground style={styles.container}
-      source={require('./assets/bg-overlay.png')}>
-      <Image style={styles.logo}
-        source={require('./assets/unicopa.png')}
-      />
+  return (
+    <ImageBackground
+      source={require('./assets/bg-overlay.png')}
+      style={styles.container}
+      resizeMode="cover"
+    >
 
-      <Text style={styles.title}>CALENDÁRIO</Text>
+      <View style={styles.content}>
 
-      <SectionList
-        sections={jogosTratados}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={() => null}
-        renderSectionHeader={({ section }) => (
+        <Image
+          style={styles.logo}
+          source={require('./assets/unicopa.png')}
+        />
 
-          <DiaCard data={section.title} jogos={section.data} />
-        )}
-      />
+        <Text style={styles.title}>
+          CALENDÁRIO
+        </Text>
+
+      
+        <View style={styles.filtrosContainer}>
+
+          {grupos.map((grupo) => (
+            <TouchableOpacity
+              key={grupo}
+              style={[
+                styles.botaoGrupo,
+                grupoSelecionado === grupo && styles.botaoGrupoAtivo
+              ]}
+              onPress={() => setGrupoSelecionado(grupo)}
+            >
+              <Text
+                style={[
+                  styles.textoGrupo,
+                  grupoSelecionado === grupo && styles.textoGrupoAtivo
+                ]}
+              >
+                {grupo}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+        </View>
+
+      
+        <SectionList
+          style={{ width: '100%' }}
+          contentContainerStyle={{
+            alignItems: 'center',
+            paddingBottom: 40
+          }}
+          sections={jogosTratados}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={() => null}
+          renderSectionHeader={({ section }) => (
+            <DiaCard
+              data={section.title}
+              jogos={section.data}
+              favoritos={favoritos}
+              toggleFavorito={toggleFavorito}
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+        />
+
+      </View>
 
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+
   container: {
-    height: '100%',
+    flex: 1,
     width: '100%',
     backgroundColor: '#040b13',
-    alignItems: 'center',
   },
+
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+
   logo: {
-    marginTop: 20,
     width: 200,
     height: 50,
     resizeMode: 'contain'
   },
+
   title: {
     marginTop: 10,
     fontSize: 28,
     fontWeight: '700',
     color: 'white',
   },
-  card: {
+
+  filtrosContainer: {
     marginTop: 20,
-    backgroundColor: '#0c1b2a',
-    width: 320,
-    borderRadius: 12,
-    padding: 15,
+    marginBottom: 10,
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingHorizontal: 10
   },
-  data: {
-    color: '#f2cc2f',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10
+
+  botaoGrupo: {
+    backgroundColor: '#102030',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#1e2d3d',
+    margin: 4
   },
+
+  botaoGrupoAtivo: {
+    backgroundColor: '#f2cc2f',
+  },
+
+  textoGrupo: {
+    color: 'white',
+    fontWeight: 'bold'
+  },
+
+  textoGrupoAtivo: {
+    color: '#040b13'
+  }
+
 });
