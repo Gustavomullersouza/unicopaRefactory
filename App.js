@@ -7,7 +7,7 @@ import {
   SectionList,
   TouchableOpacity
 } from 'react-native';
-
+//adiconei todos os jogos no supabase --comentario pra subir no git --apagar depois
 import { useState } from 'react';
 
 import dados from './assets/dados.json';
