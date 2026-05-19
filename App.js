@@ -8,18 +8,49 @@ import {
   TouchableOpacity
 } from 'react-native';
 //adiconei todos os jogos no supabase --comentario pra subir no git --apagar depois
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import dados from './assets/dados.json';
 import { formatarData } from './utils/DateFormat';
 import DiaCard from './componentes/DiaCard';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from './utils/supabase';
 
 export default function App() {
 
   const jogos = dados.jogos;
 
+  useEffect( ()=> {
+
+async function inserirUsuario(){
+      
+    const {data, error } = await supabase
+    .from('usuarios')
+    .insert ([
+      {
+        nome : 'Taffe',
+        ra : '00000000',
+        email : 'test@test.com.br',
+        senha : '123456',
+        telefone : '11999999999',
+        data_nascimento : '2000-01-01', 
+      }
+    ])
+    if(!error){
+      console.log('Usuario inserido com sucesso')
+    }else{
+      console.log('Erro ao inserir usuario', error)
+    }
+
+    }
+      inserirUsuario();
+
+  }, [] )
+
   const [favoritos, setFavoritos] = useState([]);
   const [grupoSelecionado, setGrupoSelecionado] = useState('TODOS');
+
+
 
   const grupos = [
     'TODOS',
@@ -61,8 +92,11 @@ export default function App() {
   const jogosTratados = Object.keys(jogosAgrupados).map(data => ({
     title: data,
     data: jogosAgrupados[data]
+  
+  
+  
   }));
-
+  
   return (
     <ImageBackground
       source={require('./assets/bg-overlay.png')}
