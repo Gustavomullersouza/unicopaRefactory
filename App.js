@@ -18,37 +18,61 @@ import { supabase } from './utils/supabase';
 
 export default function App() {
 
-  const jogos = dados.jogos;
+  const [jogos, setJogos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect( ()=> {
+  useEffect(() => {
+    async function carregarJogos() {
+      setLoading(true);
 
-async function inserirUsuario(){
-      
-    const {data, error } = await supabase
-    .from('usuarios')
-    .insert ([
-      {
-        nome : 'Taffe',
-        ra : '00000000',
-        email : 'test@test.com.br',
-        senha : '123456',
-        telefone : '11999999999',
-        data_nascimento : '2000-01-01', 
+      const { data, error } = await supabase
+        .from('jogos_copa')
+        .select('*')
+        .order('data_brasilia', { ascending: true });
+
+      if (error) {
+        console.log('Erro ao buscar jogos:', error);
+        setJogos([]);
+      } else {
+        setJogos(data ?? []);
       }
-    ])
-    if(!error){
-      console.log('Usuario inserido com sucesso')
-    }else{
-      console.log('Erro ao inserir usuario', error)
+
+      setLoading(false);
     }
 
-    }
-      inserirUsuario();
+    carregarJogos();
+  }, []);
 
-  }, [] )
+  useEffect(() => {
+
+    async function inserirUsuario() {
+
+      const { data, error } = await supabase
+        .from('usuarios')
+        .insert([
+          {
+            nome: 'Taffe',
+            ra: '00000000',
+            email: 'test@test.com.br',
+            senha: '123456',
+            telefone: '11999999999',
+            data_nascimento: '2000-01-01',
+          }
+        ])
+      if (!error) {
+        console.log('Usuario inserido com sucesso')
+      } else {
+        console.log('Erro ao inserir usuario', error)
+      }
+
+    }
+    inserirUsuario();
+
+  }, [])
 
   const [favoritos, setFavoritos] = useState([]);
   const [grupoSelecionado, setGrupoSelecionado] = useState('TODOS');
+
 
 
 
@@ -87,16 +111,34 @@ async function inserirUsuario(){
     }, {});
   };
 
-  const jogosAgrupados = agruparPorData(jogosFiltrados);
+  const jogosAgrupados = agruparPorData(jogosFiltrados ?? []);
 
   const jogosTratados = Object.keys(jogosAgrupados).map(data => ({
     title: data,
     data: jogosAgrupados[data]
-  
-  
-  
+
+
+
   }));
-  
+
+  const SemJogos = () => (
+    <View style={{
+      marginTop: 30,
+      padding: 20,
+      backgroundColor: '#0c1b2a',
+      borderRadius: 12,
+      alignItems: 'center'
+    }}>
+      <Text style={{
+        color: '#f2cc2f',
+        fontSize: 16,
+        fontWeight: 'bold'
+      }}>
+        Nenhum jogo carregado
+      </Text>
+    </View>
+  );
+
   return (
     <ImageBackground
       source={require('./assets/bg-overlay.png')}
@@ -115,7 +157,7 @@ async function inserirUsuario(){
           CALENDÁRIO
         </Text>
 
-      
+
         <View style={styles.filtrosContainer}>
 
           {grupos.map((grupo) => (
@@ -140,27 +182,34 @@ async function inserirUsuario(){
 
         </View>
 
-      
-        <SectionList
-          style={{ width: '100%' }}
-          contentContainerStyle={{
-            alignItems: 'center',
-            paddingBottom: 40
-          }}
-          sections={jogosTratados}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={() => null}
-          renderSectionHeader={({ section }) => (
-            <DiaCard
-              data={section.title}
-              jogos={section.data}
-              favoritos={favoritos}
-              toggleFavorito={toggleFavorito}
-            />
-          )}
-          showsVerticalScrollIndicator={false}
-        />
 
+        {loading ? (
+          <Text style={{ color: 'white', marginTop: 20 }}>
+            Carregando jogos...
+          </Text>
+        ) : jogos.length === 0 ? (
+          <SemJogos />
+        ) : (
+          <SectionList
+            style={{ width: '100%' }}
+            contentContainerStyle={{
+              alignItems: 'center',
+              paddingBottom: 40
+            }}
+            sections={jogosTratados}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={() => null}
+            renderSectionHeader={({ section }) => (
+              <DiaCard
+                data={section.title}
+                jogos={section.data}
+                favoritos={favoritos}
+                toggleFavorito={toggleFavorito}
+              />
+            )}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </View>
 
     </ImageBackground>
